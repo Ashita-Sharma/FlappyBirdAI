@@ -85,8 +85,29 @@ class Bird:
         # mask is the nontransparent pixels of the bird sprite
         # it is used for exact collision detection instead of using hitboxes
         return pygame.mask.from_surface(self.img)
-# test
 
+
+def draw_window(win, bird):
+    win.blit(BG_IMG, (0, 0))
+    bird.draw(win)
+    pygame.display.update()
+
+
+# blit is block image transfer
+# it is used for layering images
+
+def main():
+    bird = Bird(0, 0)
+    run = True
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+    pygame.quit()
+    quit()
+
+
+main()
 while True:
     pass
 
