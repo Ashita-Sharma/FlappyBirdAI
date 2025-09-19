@@ -179,8 +179,17 @@ def draw_window(win, bird, pipes, base, score):
 # blit is block image transfer
 # it is used for layering images
 
-def main():
-    bird = Bird(230, 350)
+def main(genomes, config):
+    nets = []
+    ge = []
+    birds = []
+    for g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
+        nets.append(net)  # addds the network+genome+existence of each bird to a corresponding slot(eg:0,1,2, etc.)
+        birds.append(Bird(230, 350))  # initializes bird
+        g.fitness = 0  # initialize the fitness
+        ge.append(g)
+    # bird = Bird(230, 350)
     base = Base(700)
     pipes = [Pipe(700)]
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
@@ -198,24 +207,30 @@ def main():
 
         rem = []
         for pipe in pipes:
-            if pipe.collide(bird, win):
-                pass
+            for bird in birds:
+                if pipe.collide(bird, win):
+                    pass
+                if not pipe.passed and pipe.x < bird.x:
+                    # if pipe goes past the bird
+
+                    pipe.passed = True
+                    add_pipe = True
+
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
-                # if rightmost edge of pipe is gone(since leftmost topmost coordinate is (0,0))
-                # remove the pipe
                 rem.append(pipe)
-            if not pipe.passed and pipe.x < bird.x:
-                # if pipe goes past the bird
-                pipe.passed = True
-                add_pipe = True
+            # if rightmost edge of pipe is gone(since leftmost topmost coordinate is (0,0))
+            # remove the pipe
             pipe.move()
+
+
         if add_pipe:
             # score logic
             score += 1
             # creates another pipe to be displayed after current pipe crosses the bird
             pipes.append(Pipe(700))
-        if bird.y + bird.img.get_height() >= 730:
-            pass
+        for bird in birds:
+            if bird.y + bird.img.get_height() >= 730:
+                pass
         for r in rem:
             pipes.remove(r)
             # deletes the pipe that passed just now
@@ -228,3 +243,22 @@ def main():
 main()
 
 
+def run(config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                config_path)
+    # to create the population, which is the top-level object for a NEAT run.
+    p = neat.Population(config)
+
+    # Add a stdout reporter to show progress in the terminal.
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+    # p.add_reporter(neat.Checkpointer(5))
+    winner = p.run(run, 50)
+
+
+if __name__ == '__main__':
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, 'config-feedforward.txt')
+    run(config_path)
