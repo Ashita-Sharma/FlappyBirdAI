@@ -4,6 +4,7 @@ import pygame
 import neat
 import random
 
+pygame.font.init()
 WIN_WIDTH = 576
 WIN_HEIGHT = 800
 
@@ -11,7 +12,7 @@ BIRD_IMG = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bir
 PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "base.png")))
 BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bg.png")))
-
+STAT_FONT = pygame.font.SysFont('Consolas', 30)
 class Bird:
     IMGS = BIRD_IMG
     MAX_ROTATION = 25
@@ -163,10 +164,13 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_window(win, bird, pipes, base):
+def draw_window(win, bird, pipes, base, score):
     win.blit(BG_IMG, (0, 0))
+
     for pipe in pipes:
         pipe.draw(win)
+    text = STAT_FONT.render(f"Score:{score}", 1, (255, 255, 255))
+    win.blit(text, (WIN_WIDTH - 100 - text.get_height(), 10))
     base.draw(win)
     bird.draw(win)
     pygame.display.update()
@@ -210,12 +214,14 @@ def main():
             score += 1
             # creates another pipe to be displayed after current pipe crosses the bird
             pipes.append(Pipe(700))
+        if bird.y + bird.img.get_height() >= 730:
+            pass
         for r in rem:
             pipes.remove(r)
             # deletes the pipe that passed just now
         # bird.move()
         base.move()
-        draw_window(win, bird, pipes, base)
+        draw_window(win, bird, pipes, base, score)
 
     pygame.quit()
     quit()
