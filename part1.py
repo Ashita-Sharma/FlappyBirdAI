@@ -3,7 +3,8 @@ import time
 import pygame
 import neat
 import random
-WIN_WIDTH = 600
+
+WIN_WIDTH = 576
 WIN_HEIGHT = 800
 
 BIRD_IMG = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird1.png"))),pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird2.png"))),pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird3.png")))]
@@ -108,33 +109,32 @@ class Pipe:
         self.passed = False
         self.set_height()
 
+    def move(self):
+        # moving of pipes to the left
+        self.x -= self.VEL
 
-        def move(self):
-            # moving of pipes to the left
-            self.x -= self.VEL
+    def draw(self, win):
+        # draw top
+        win.blit(self.PIPE_TOP, (self.x, self.top))
+        # draw bottom
+        win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
 
-        def draw(self, win):
-            # draw top
-            win.blit(self.PIPE_TOP, (self.x, self.top))
-            # draw bottom
-            win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
+    def collide(self, bird, win):
+        bird_mask = bird.get_mask()
+        top_mask = pygame.mask.from_surface(self.PIPE_TOP)
+        bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
+        # to check coordinates of bird and pipes
+        top_offset = (self.x - bird.x, self.top - round(bird.y))
 
-        def collide(self, bird, win):
-            bird_mask = bird.get_mask()
-            top_mask = pygame.mask.from_surface(self.PIPE_TOP)
-            bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
-            # to check coordinates of bird and pipes
-            top_offset = (self.x - bird.x, self.top - round(bird.y))
+        bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+        # if they do not overlap, returns None
+        b_point = bird_mask.overlap(bottom_mask, bottom_offset)
+        t_point = bird_mask.overlap(top_mask, top_offset)
+        # vvv makes sure b/t point are not None
+        if b_point or t_point:
+            return True
 
-            bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
-            # if they do not overlap, returns None
-            b_point = bird_mask.overlap(bottom_mask, bottom_offset)
-            t_point = bird_mask.overlap(top_mask, top_offset)
-            # vvv makes sure b/t point are not None
-            if b_point or t_point:
-                return True
-
-            return False
+        return False
 
 
 class Base:
@@ -162,8 +162,12 @@ class Base:
         win.blit(self.IMG, (self.x1, self.y))
         win.blit(self.IMG, (self.x2, self.y))
 
-def draw_window(win, bird):
+
+def draw_window(win, bird, pipes, base):
     win.blit(BG_IMG, (0, 0))
+    for pipe in pipes:
+        pipe.draw(win)
+    base.draw(win)
     bird.draw(win)
     pygame.display.update()
 
@@ -172,18 +176,49 @@ def draw_window(win, bird):
 # it is used for layering images
 
 def main():
-    bird = Bird(0, 0)
+    bird = Bird(230, 350)
+    base = Base(700)
+    pipes = [Pipe(700)]
+    win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+    clock = pygame.time.Clock()
+    score = 0
     run = True
     while run:
+        clock.tick(30)
+
+        add_pipe = False
         for event in pygame.event.get():
-            #gets/receives information of everything that has happened otherwise it will become unresponsive
+            # gets/receives information of everything that has happened otherwise it will become unresponsive
             if event.type == pygame.QUIT:
                 run = False
+
+        rem = []
+        for pipe in pipes:
+            if pipe.collide(bird, win):
+                pass
+            if pipe.x + pipe.PIPE_TOP.get_width() < 0:
+                # if rightmost edge of pipe is gone(since leftmost topmost coordinate is (0,0))
+                # remove the pipe
+                rem.append(pipe)
+            if not pipe.passed and pipe.x < bird.x:
+                # if pipe goes past the bird
+                pipe.passed = True
+                add_pipe = True
+            pipe.move()
+        if add_pipe:
+            # score logic
+            score += 1
+            # creates another pipe to be displayed after current pipe crosses the bird
+            pipes.append(Pipe(700))
+        for r in rem:
+            pipes.remove(r)
+            # deletes the pipe that passed just now
+        # bird.move()
+        base.move()
+        draw_window(win, bird, pipes, base)
+
     pygame.quit()
     quit()
-
 main()
-while True:
-    pass
 
 
