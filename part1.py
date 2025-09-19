@@ -101,6 +101,24 @@ class Pipe:
         self.PIPE_BOTTOM = PIPE_IMG
         self.passed = False
         self.set_height()
+
+        def set_height(self):
+            # randomizing height of pipes
+            self.height = random.randrange(50, 450)
+            self.top = self.height - self.PIPE_TOP.get_height()
+            self.bottom = self.height + self.GAP
+
+        def move(self):
+            # moving of pipes to the left
+            self.x -= self.VEL
+
+        def draw(self, win):
+            # draw top
+            win.blit(self.PIPE_TOP, (self.x, self.top))
+            # draw bottom
+            win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
+
+
 def draw_window(win, bird):
     win.blit(BG_IMG, (0, 0))
     bird.draw(win)
@@ -115,6 +133,7 @@ def main():
     run = True
     while run:
         for event in pygame.event.get():
+            #gets/receives information of everything that has happened otherwise it will become unresponsive
             if event.type == pygame.QUIT:
                 run = False
     pygame.quit()
