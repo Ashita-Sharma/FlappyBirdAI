@@ -3,11 +3,15 @@ import time
 import pygame
 import neat
 import random
+import pickle
 
+time.sleep(0.01)
+gen = 0
 pygame.font.init()
 WIN_WIDTH = 576
 WIN_HEIGHT = 800
-
+END_FONT = pygame.font.SysFont("Consolas", 15)
+DRAW_LINES = False
 BIRD_IMG = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird1.png"))),pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird2.png"))),pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird3.png")))]
 PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "base.png")))
@@ -164,13 +168,26 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_window(win, birds, pipes, base, score):
-    win.blit(BG_IMG, (0, 0))
+def draw_window(win, birds, pipes, base, score, gen):
+    if gen == 0:
+        gen = 1
 
+    win.blit(BG_IMG, (0, 0))
+    pygame.display.set_caption("Flappy Bird")
     for pipe in pipes:
         pipe.draw(win)
+
+    # generations
+    score_label = STAT_FONT.render("Gens: " + str(gen - 1), 1, (255, 255, 255))
+    win.blit(score_label, (10, 10))
+
     text = STAT_FONT.render(f"Score:{score}", 1, (255, 255, 255))
     win.blit(text, (WIN_WIDTH - 150 - text.get_height(), 10))
+
+    # alive
+    score_label = STAT_FONT.render("Alive: " + str(len(birds)), 1, (255, 255, 255))
+    win.blit(score_label, (10, 50))
+
     base.draw(win)
     for bird in birds:
         bird.draw(win)
@@ -181,6 +198,9 @@ def draw_window(win, birds, pipes, base, score):
 # it is used for layering images
 
 def main(genomes, config):
+    global win, gen
+    gen += 1
+
     nets = []
     ge = []
     birds = []
@@ -260,8 +280,11 @@ def main(genomes, config):
             # deletes the pipe that passed just now
         # bird.move()
         base.move()
-        draw_window(win, birds, pipes, base, score)
-
+        draw_window(win, birds, pipes, base, score, gen)
+        # break if score gets large enough
+        if score > 20:
+            pickle.dump(nets[0], open("best.pickle", "wb"))
+            break
 
 
 
@@ -279,6 +302,7 @@ def run(config_path):
     # p.add_reporter(neat.Checkpointer(5))
     winner = p.run(main, 50)
 
+    print('\nBest genome:\n{!s}'.format(winner))
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
